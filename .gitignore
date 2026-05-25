@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+.DS_Store
+
+# Not needed on Hugging Face — keeps Space under size limits
+Group_F_final.ipynb
+all_models.pkl
+student_data_cleaned.csv
+*.png
