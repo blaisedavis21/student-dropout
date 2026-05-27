@@ -396,9 +396,10 @@ def load_artifacts():
         with open("feature_columns.pkl", "rb") as f:
             feature_cols = pickle.load(f)
         return model, scaler, le, feature_cols
-    except FileNotFoundError:
+    except Exception as e:
+        st.error(f"Failed to load model: {e}")
+        st.stop()
         return None, None, None, None
-
 model, scaler, le, feature_cols = load_artifacts()
 
 # ── Intervention rules ─────────────────────────────────────────────────────────
