@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 import pickle
 
-# ── Page config ───────────────────────────────────────────────────────────────
+# ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="RetainAI — Student Success Dashboard",
-    page_icon="🎓",
+    page_icon="R",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -15,226 +15,369 @@ st.set_page_config(
 def inject_styles():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+    :root {
+        --bg:       #080c10;
+        --bg-2:     #0d1117;
+        --bg-3:     #111820;
+        --border:   rgba(255,255,255,0.07);
+        --border-2: rgba(255,255,255,0.12);
+        --accent:   #00e5ff;
+        --accent-2: #00b8cc;
+        --red:      #ff3b3b;
+        --amber:    #ffb300;
+        --green:    #00e676;
+        --text-1:   #f0f4f8;
+        --text-2:   #8b98a9;
+        --text-3:   #4a5568;
+    }
+
+    * { box-sizing: border-box; }
 
     .stApp {
-        background: linear-gradient(165deg, #0f172a 0%, #1e293b 42%, #0f172a 100%);
+        background: var(--bg);
+        font-family: 'IBM Plex Sans', sans-serif;
     }
+
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0c1222 0%, #151d33 100%);
-        border-right: 1px solid rgba(148, 163, 184, 0.12);
+        background: var(--bg-2) !important;
+        border-right: 1px solid var(--border-2);
     }
-    [data-testid="stSidebar"] .stMarkdown { color: #cbd5e1; }
-    [data-testid="stHeader"] { background: transparent; }
+    [data-testid="stSidebar"] > div { padding-top: 2rem; }
+    [data-testid="stSidebar"] .stMarkdown,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span { color: var(--text-2) !important; }
+    [data-testid="stHeader"] { background: transparent !important; }
 
-    .hero-wrap {
-        background: linear-gradient(135deg, #1d4ed8 0%, #7c3aed 55%, #db2777 100%);
-        border-radius: 20px;
-        padding: 2.2rem 2.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 24px 48px rgba(29, 78, 216, 0.35);
-        border: 1px solid rgba(255,255,255,0.15);
+    /* ── HEADER BANNER ─────────────────────────────── */
+    .banner {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 2.5rem 2.75rem;
+        margin-bottom: 2rem;
+        background: var(--bg-2);
+        border: 1px solid var(--border-2);
+        border-left: 3px solid var(--accent);
+        position: relative;
+        overflow: hidden;
     }
-    .hero-title {
-        font-family: 'Instrument Serif', Georgia, serif;
-        font-size: 2.6rem;
-        font-weight: 400;
-        color: #fff;
-        margin: 0 0 0.5rem 0;
-        line-height: 1.15;
-        letter-spacing: -0.02em;
+    .banner::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0;
+        width: 320px; height: 100%;
+        background: linear-gradient(135deg, transparent 60%, rgba(0,229,255,0.03) 100%);
+        pointer-events: none;
     }
-    .hero-sub {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 1.05rem;
-        color: rgba(255,255,255,0.92);
-        margin: 0;
-        max-width: 640px;
-        line-height: 1.55;
-    }
-    .hero-badge {
-        display: inline-block;
-        background: rgba(255,255,255,0.2);
-        backdrop-filter: blur(8px);
-        color: #fff;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        padding: 0.35rem 0.85rem;
-        border-radius: 999px;
-        margin-bottom: 1rem;
-        border: 1px solid rgba(255,255,255,0.25);
-    }
-
-    .section-card {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(148, 163, 184, 0.15);
-        border-radius: 16px;
-        padding: 1.25rem 1.5rem;
-        margin-bottom: 1rem;
-    }
-    .section-label {
-        font-family: 'DM Sans', sans-serif;
+    .banner-eyebrow {
+        font-family: 'IBM Plex Mono', monospace;
         font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #94a3b8;
-        margin: 0 0 0.25rem 0;
-    }
-    .section-title {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 1.15rem;
-        font-weight: 600;
-        color: #f1f5f9;
-        margin: 0 0 0.75rem 0;
-    }
-
-    .result-hero {
-        border-radius: 20px;
-        padding: 2rem 2.25rem;
-        margin: 1.25rem 0 1.5rem 0;
-        border: 1px solid rgba(255,255,255,0.12);
-        text-align: center;
-    }
-    .result-hero.low {
-        background: linear-gradient(135deg, rgba(16,185,129,0.25) 0%, rgba(5,150,105,0.15) 100%);
-        box-shadow: 0 16px 40px rgba(16, 185, 129, 0.2);
-    }
-    .result-hero.medium {
-        background: linear-gradient(135deg, rgba(245,158,11,0.28) 0%, rgba(217,119,6,0.15) 100%);
-        box-shadow: 0 16px 40px rgba(245, 158, 11, 0.2);
-    }
-    .result-hero.high {
-        background: linear-gradient(135deg, rgba(239,68,68,0.3) 0%, rgba(185,28,28,0.18) 100%);
-        box-shadow: 0 16px 40px rgba(239, 68, 68, 0.25);
-    }
-    .risk-pct {
-        font-family: 'Instrument Serif', Georgia, serif;
-        font-size: 4rem;
         font-weight: 400;
-        color: #fff;
-        line-height: 1;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
         margin: 0;
     }
-    .risk-label {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 1rem;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: rgba(255,255,255,0.85);
-        margin: 0.5rem 0 0 0;
+    .banner-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: var(--text-1);
+        margin: 0;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
     }
-    .risk-msg {
-        font-family: 'DM Sans', sans-serif;
+    .banner-sub {
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 300;
+        color: var(--text-2);
+        margin: 0;
+        max-width: 580px;
+        line-height: 1.6;
+    }
+
+    /* ── SECTION HEADINGS ──────────────────────────── */
+    .step-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 1.5rem 0 0.2rem 0;
+    }
+    .step-title {
+        font-family: 'Syne', sans-serif;
         font-size: 1.05rem;
-        color: rgba(255,255,255,0.9);
-        margin: 1rem auto 0;
-        max-width: 520px;
-        line-height: 1.5;
-    }
-
-    .stat-box {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(148, 163, 184, 0.12);
-        border-radius: 14px;
-        padding: 1.1rem 1.25rem;
-        text-align: center;
-        height: 100%;
-    }
-    .stat-val {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 1.5rem;
         font-weight: 700;
-        color: #f8fafc;
-        margin: 0;
-    }
-    .stat-lbl {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #94a3b8;
-        margin: 0.35rem 0 0 0;
+        color: var(--text-1);
+        margin: 0 0 0.9rem 0;
+        letter-spacing: -0.01em;
     }
 
-    .intervention-card {
-        border-radius: 12px;
-        padding: 1rem 1.15rem;
-        margin-bottom: 0.65rem;
-        border-left: 4px solid;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.92rem;
-        line-height: 1.5;
-        color: #e2e8f0;
-    }
-    .intervention-card.financial { background: rgba(239,68,68,0.12); border-color: #ef4444; }
-    .intervention-card.academic { background: rgba(59,130,246,0.12); border-color: #3b82f6; }
-    .intervention-card.declining { background: rgba(168,85,247,0.12); border-color: #a855f7; }
-    .intervention-card.scholarship { background: rgba(34,197,94,0.1); border-color: #22c55e; }
-    .intervention-card.accommodation { background: rgba(14,165,233,0.12); border-color: #0ea5e9; }
-    .intervention-card.mature { background: rgba(251,191,36,0.1); border-color: #fbbf24; }
-    .intervention-card.wellbeing { background: rgba(244,63,94,0.15); border-color: #f43f5e; }
-    .intervention-card.low { background: rgba(16,185,129,0.1); border-color: #10b981; }
-    .intervention-card.default { background: rgba(148,163,184,0.1); border-color: #64748b; }
-    .int-tag {
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        opacity: 0.9;
-        display: block;
-        margin-bottom: 0.35rem;
-    }
-
+    /* ── FORM CONTAINER ────────────────────────────── */
     div[data-testid="stForm"] {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(148, 163, 184, 0.12);
-        border-radius: 18px;
-        padding: 1.5rem 1.75rem 0.5rem;
+        background: var(--bg-2) !important;
+        border: 1px solid var(--border-2) !important;
+        border-radius: 0 !important;
+        padding: 1.75rem 2rem 0.75rem !important;
     }
+
+    /* ── INPUTS ────────────────────────────────────── */
+    .stSelectbox > div > div,
+    .stNumberInput > div > div > input {
+        background: var(--bg-3) !important;
+        border: 1px solid var(--border-2) !important;
+        border-radius: 0 !important;
+        color: var(--text-1) !important;
+        font-family: 'IBM Plex Sans', sans-serif !important;
+    }
+    .stSelectbox > div > div:focus-within,
+    .stNumberInput > div > div:focus-within {
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 1px var(--accent) !important;
+    }
+    label { color: var(--text-2) !important; font-size: 0.82rem !important; }
+
+    /* ── SUBMIT BUTTON ─────────────────────────────── */
     .stFormSubmitButton button {
-        background: linear-gradient(90deg, #2563eb, #7c3aed) !important;
-        color: white !important;
+        background: var(--accent) !important;
+        color: #000 !important;
         font-weight: 700 !important;
-        font-family: 'DM Sans', sans-serif !important;
+        font-family: 'IBM Plex Mono', monospace !important;
+        font-size: 0.85rem !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
         border: none !important;
-        border-radius: 12px !important;
-        padding: 0.75rem 1.5rem !important;
-        font-size: 1rem !important;
-        letter-spacing: 0.02em !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+        border-radius: 0 !important;
+        padding: 0.8rem 2rem !important;
+        transition: background 0.15s ease, transform 0.1s ease !important;
     }
     .stFormSubmitButton button:hover {
-        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45) !important;
-        transform: translateY(-1px);
+        background: var(--accent-2) !important;
+        transform: translateY(-1px) !important;
     }
 
-    [data-testid="stMetric"] {
-        background: rgba(255,255,255,0.05);
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-        border: 1px solid rgba(148,163,184,0.1);
+    /* ── RESULT HERO ───────────────────────────────── */
+    .result-wrap {
+        padding: 2.5rem 2.75rem;
+        margin: 1.5rem 0;
+        border-left: 3px solid;
+        background: var(--bg-2);
+        position: relative;
     }
-    [data-testid="stMetricLabel"] { color: #94a3b8 !important; }
-    [data-testid="stMetricValue"] { color: #f1f5f9 !important; }
+    .result-wrap.low  { border-color: var(--green); }
+    .result-wrap.medium { border-color: var(--amber); }
+    .result-wrap.high { border-color: var(--red); }
 
-    .disclaimer {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.8rem;
-        color: #64748b;
-        line-height: 1.5;
+    .result-pct {
+        font-family: 'Syne', sans-serif;
+        font-size: 5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 0;
+        letter-spacing: -0.04em;
+    }
+    .result-wrap.low  .result-pct { color: var(--green); }
+    .result-wrap.medium .result-pct { color: var(--amber); }
+    .result-wrap.high .result-pct { color: var(--red); }
+
+    .result-tier {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-2);
+        margin: 0.5rem 0 1rem 0;
+    }
+    .result-msg {
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 300;
+        color: var(--text-2);
+        line-height: 1.6;
+        max-width: 560px;
+        margin: 0;
+    }
+    .result-msg strong { color: var(--text-1); font-weight: 600; }
+
+    /* ── STAT BOXES ────────────────────────────────── */
+    .stat-row { display: flex; gap: 1px; margin: 1.5rem 0; background: var(--border); }
+    .stat-cell {
+        flex: 1;
+        background: var(--bg-2);
+        padding: 1.2rem 1.4rem;
+    }
+    .stat-val {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text-1);
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+    .stat-key {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin: 0.4rem 0 0 0;
+    }
+
+    /* ── PROGRESS BAR ──────────────────────────────── */
+    .stProgress > div > div > div {
+        background: var(--accent) !important;
+        border-radius: 0 !important;
+        height: 3px !important;
+    }
+    .stProgress > div > div {
+        background: var(--border-2) !important;
+        border-radius: 0 !important;
+        height: 3px !important;
+    }
+
+    /* ── INTERVENTION CARDS ────────────────────────── */
+    .int-card {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
         padding: 1rem 1.25rem;
-        background: rgba(0,0,0,0.2);
-        border-radius: 10px;
-        border: 1px solid rgba(148,163,184,0.08);
+        margin-bottom: 2px;
+        background: var(--bg-2);
+        border-left: 2px solid;
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 0.88rem;
+        line-height: 1.55;
+        color: var(--text-2);
+    }
+    .int-card.financial    { border-color: var(--red); }
+    .int-card.academic     { border-color: #448aff; }
+    .int-card.declining    { border-color: #d500f9; }
+    .int-card.scholarship  { border-color: var(--green); }
+    .int-card.accommodation { border-color: #00b0ff; }
+    .int-card.mature       { border-color: var(--amber); }
+    .int-card.wellbeing    { border-color: #ff4081; }
+    .int-card.low          { border-color: var(--green); }
+    .int-card.default      { border-color: var(--border-2); }
+
+    .int-tag {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.6rem;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        padding-top: 0.15rem;
+        min-width: 110px;
+    }
+    .int-card.financial    .int-tag { color: var(--red); }
+    .int-card.academic     .int-tag { color: #448aff; }
+    .int-card.declining    .int-tag { color: #d500f9; }
+    .int-card.scholarship  .int-tag { color: var(--green); }
+    .int-card.accommodation .int-tag { color: #00b0ff; }
+    .int-card.mature       .int-tag { color: var(--amber); }
+    .int-card.wellbeing    .int-tag { color: #ff4081; }
+    .int-card.low          .int-tag { color: var(--green); }
+    .int-card.default      .int-tag { color: var(--text-3); }
+
+    /* ── SIDEBAR CARDS ─────────────────────────────── */
+    .side-block {
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .side-block-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 0.6rem 0;
+    }
+    .side-block p {
+        font-size: 0.85rem !important;
+        line-height: 1.55;
+    }
+    .tier-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.35rem;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.78rem;
+    }
+    .tier-dot {
+        width: 6px; height: 6px;
+        flex-shrink: 0;
     }
 
-    h1, h2, h3, label, p, span, .stMarkdown { font-family: 'DM Sans', sans-serif; }
+    /* ── DISCLAIMER ────────────────────────────────── */
+    .disclaimer {
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 0.78rem;
+        font-weight: 300;
+        color: var(--text-3);
+        line-height: 1.6;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--border);
+        border-left: 2px solid var(--text-3);
+        margin-top: 1.5rem;
+    }
+
+    /* ── INFO BOX ──────────────────────────────────── */
+    .stInfo {
+        background: var(--bg-2) !important;
+        border: 1px solid var(--border-2) !important;
+        border-left: 2px solid var(--accent) !important;
+        border-radius: 0 !important;
+        color: var(--text-2) !important;
+    }
+    .stAlert { border-radius: 0 !important; }
+
+    /* ── DIVIDERS ──────────────────────────────────── */
+    hr { border-color: var(--border) !important; }
+
+    /* ── METRICS ───────────────────────────────────── */
+    [data-testid="stMetric"] {
+        background: var(--bg-2) !important;
+        border-radius: 0 !important;
+        border: 1px solid var(--border) !important;
+        padding: 0.9rem 1.1rem !important;
+    }
+    [data-testid="stMetricLabel"] { color: var(--text-3) !important; }
+    [data-testid="stMetricValue"] { color: var(--text-1) !important; }
+
+    /* ── ADVISOR INFO PANEL ────────────────────────── */
+    .info-panel {
+        background: var(--bg-2);
+        border: 1px solid var(--border-2);
+        border-left: 2px solid var(--accent);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .info-panel-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 0.35rem 0;
+    }
+    .info-panel-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-1);
+        margin: 0 0 0.6rem 0;
+    }
+    .info-panel p {
+        color: var(--text-2);
+        font-size: 0.85rem;
+        line-height: 1.55;
+        margin: 0;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -264,10 +407,8 @@ def get_interventions(inputs, dropout_pct):
     s1_enrolled = inputs.get("Curricular units 1st sem (enrolled)", 1)
     s1_approved = inputs.get("Curricular units 1st sem (approved)", 0)
     s1_grade    = inputs.get("Curricular units 1st sem (grade)", 0)
-    s1_rate = s1_approved / max(s1_enrolled, 1)
+    s1_rate     = s1_approved / max(s1_enrolled, 1)
 
-    s2_enrolled = inputs.get("Curricular units 2nd sem (enrolled)", 1)
-    s2_approved = inputs.get("Curricular units 2nd sem (approved)", 0)
     s2_grade    = inputs.get("Curricular units 2nd sem (grade)", 0)
 
     if inputs.get("Debtor", 0) == 1:
@@ -310,8 +451,9 @@ def render_intervention(rec):
     tag, _, body = rec.partition(":")
     css = intervention_css_class(rec)
     st.markdown(
-        f'<div class="intervention-card {css}">'
-        f'<span class="int-tag">{tag.strip()}</span>{body.strip()}'
+        f'<div class="int-card {css}">'
+        f'<span class="int-tag">{tag.strip()}</span>'
+        f'<span>{body.strip()}</span>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -345,7 +487,7 @@ def engineer_features(inputs):
     inputs["Total Units Enrolled"]       = s1e + s2e
     inputs["Approval Rate 1st Sem"]      = s1a / max(s1e, 1)
     inputs["Approval Rate 2nd Sem"]      = s2a / max(s2e, 1)
-    total_enrolled = s1e + s2e
+    total_enrolled                        = s1e + s2e
     inputs["Overall Approval Rate"]      = (s1a + s2a) / max(total_enrolled, 1)
     inputs["Average Grade Both Sems"]    = (s1g + s2g) / 2
     inputs["Grade Improvement"]          = s2g - s1g
@@ -358,37 +500,68 @@ def engineer_features(inputs):
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("### 🎯 Why this matters")
-    st.markdown(
-        "Every student who drops out represents lost potential — and preventable cost "
-        "for the institution. **RetainAI** turns academic data into **actionable insight** "
-        "in seconds, so advisors intervene *before* it's too late."
-    )
-    st.markdown("---")
-    st.markdown("**How it works**")
-    st.markdown("1. Enter student profile & grades  \n2. XGBoost model scores dropout risk  \n3. Get tiered risk + tailored interventions")
-    st.markdown("---")
-    st.markdown("**Group F · Makerere University**  \nMachine Learning Project")
-    if model is not None:
-        st.success("✓ Model loaded & ready")
-    st.markdown("---")
-    st.caption("Powered by 46 engineered features · UCI-trained XGBoost")
+    st.markdown('<p style="font-family: Syne, sans-serif; font-size: 1.1rem; font-weight: 800; color: #f0f4f8; letter-spacing: -0.02em; margin-bottom: 1.5rem;">RetainAI</p>', unsafe_allow_html=True)
 
-# ── Hero ─────────────────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div class="side-block">
+        <p class="side-block-title">About</p>
+        <p>RetainAI turns academic data into actionable insight in seconds, so advisors can intervene before it is too late.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="side-block">
+        <p class="side-block-title">Workflow</p>
+        <p>01 — Enter student profile and grades<br>02 — XGBoost model scores dropout risk<br>03 — Receive tiered risk and tailored interventions</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="side-block">
+        <p class="side-block-title">Risk Tiers</p>
+        <div class="tier-row">
+            <div class="tier-dot" style="background:#00e676;"></div>
+            <span style="color:#8b98a9;">Low — under 30%</span>
+        </div>
+        <div class="tier-row">
+            <div class="tier-dot" style="background:#ffb300;"></div>
+            <span style="color:#8b98a9;">Medium — 30 to 59%</span>
+        </div>
+        <div class="tier-row">
+            <div class="tier-dot" style="background:#ff3b3b;"></div>
+            <span style="color:#8b98a9;">High — 60% and above</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="side-block">
+        <p class="side-block-title">Project</p>
+        <p>Group F · Makerere University<br>Machine Learning</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if model is not None:
+        st.markdown('<p style="font-family: IBM Plex Mono, monospace; font-size: 0.65rem; color: #00e676; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 1rem;">Model loaded</p>', unsafe_allow_html=True)
+    else:
+        st.markdown('<p style="font-family: IBM Plex Mono, monospace; font-size: 0.65rem; color: #ff3b3b; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 1rem;">Model not found</p>', unsafe_allow_html=True)
+
+    st.markdown('<p style="font-family: IBM Plex Mono, monospace; font-size: 0.6rem; color: #4a5568; margin-top: 0.5rem;">46 engineered features · XGBoost</p>', unsafe_allow_html=True)
+
+# ── Banner ─────────────────────────────────────────────────────────────────────
 st.markdown("""
-<div class="hero-wrap">
-    <div class="hero-badge">Group F · Student Success Intelligence</div>
-    <h1 class="hero-title">Spot at-risk students before they leave.</h1>
-    <p class="hero-sub">
+<div class="banner">
+    <p class="banner-eyebrow">Group F · Student Success Intelligence</p>
+    <h1 class="banner-title">Spot at-risk students<br>before they leave.</h1>
+    <p class="banner-sub">
         Data-driven dropout screening for academic advisors. Enter a student profile,
-        get an instant risk score, and receive evidence-based intervention recommendations
-        — so you can act with confidence, not guesswork.
+        get an instant risk score, and receive evidence-based intervention recommendations.
     </p>
 </div>
 """, unsafe_allow_html=True)
 
 if model is None:
-    st.error("Model files not found. Please ensure best_model.pkl, scaler.pkl, label_encoder.pkl, and feature_columns.pkl are in the same folder as this app.")
+    st.error("Model files not found. Ensure best_model.pkl, scaler.pkl, label_encoder.pkl, and feature_columns.pkl are in the same directory as this app.")
     st.stop()
 
 # ── Input form ─────────────────────────────────────────────────────────────────
@@ -396,25 +569,16 @@ col_form, col_info = st.columns([2, 1])
 
 with col_info:
     st.markdown("""
-    <div class="section-card">
-        <p class="section-label">Advisor tip</p>
-        <p class="section-title">Better inputs → sharper predictions</p>
-        <p style="color:#94a3b8; font-size:0.9rem; line-height:1.55; margin:0;">
-            Semester grades and financial status are the strongest signals in our model.
-            Update figures after each exam period for the most reliable risk score.
-        </p>
-    </div>
-    <div class="section-card">
-        <p class="section-label">Risk tiers</p>
-        <p style="color:#10b981; font-size:0.85rem; margin:0.25rem 0;"><strong>Low</strong> — under 30%</p>
-        <p style="color:#f59e0b; font-size:0.85rem; margin:0.25rem 0;"><strong>Medium</strong> — 30–59%</p>
-        <p style="color:#ef4444; font-size:0.85rem; margin:0.25rem 0;"><strong>High</strong> — 60%+</p>
+    <div class="info-panel">
+        <p class="info-panel-label">Advisor note</p>
+        <p class="info-panel-title">Better inputs, sharper predictions</p>
+        <p>Semester grades and financial status are the strongest signals. Update after each exam period for the most reliable risk score.</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col_form:
     with st.form("student_form"):
-        st.markdown('<p class="section-label">Step 1</p><p class="section-title">Student background</p>', unsafe_allow_html=True)
+        st.markdown('<p class="step-label">Step 01</p><p class="step-title">Student background</p>', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
             age          = st.number_input("Age at Enrollment", 17, 70, 20)
@@ -427,7 +591,7 @@ with col_form:
             admission_g  = st.number_input("Admission Grade (0–200)", 0.0, 200.0, 120.0)
             prev_qual_g  = st.number_input("Previous Qualification Grade (0–200)", 0.0, 200.0, 130.0)
 
-        st.markdown('<p class="section-label">Step 2</p><p class="section-title">1st semester performance</p>', unsafe_allow_html=True)
+        st.markdown('<p class="step-label">Step 02</p><p class="step-title">1st semester performance</p>', unsafe_allow_html=True)
         c1, c2, c3 = st.columns(3)
         with c1:
             s1_enrolled = st.number_input("Units Enrolled (Sem 1)", 0, 30, 6)
@@ -437,7 +601,7 @@ with col_form:
             s1_grade    = st.number_input("Average Grade (Sem 1)", 0.0, 20.0, 12.0)
         s1_evals = st.number_input("Evaluations Attended (Sem 1)", 0, 40, 6)
 
-        st.markdown('<p class="section-label">Step 3</p><p class="section-title">2nd semester performance</p>', unsafe_allow_html=True)
+        st.markdown('<p class="step-label">Step 03</p><p class="step-title">2nd semester performance</p>', unsafe_allow_html=True)
         c4, c5, c6 = st.columns(3)
         with c4:
             s2_enrolled = st.number_input("Units Enrolled (Sem 2)", 0, 30, 6)
@@ -447,7 +611,7 @@ with col_form:
             s2_grade    = st.number_input("Average Grade (Sem 2)", 0.0, 20.0, 11.0)
         s2_evals = st.number_input("Evaluations Attended (Sem 2)", 0, 40, 6)
 
-        submitted = st.form_submit_button("🔍 Analyze Dropout Risk", use_container_width=True)
+        submitted = st.form_submit_button("Analyze Dropout Risk", use_container_width=True)
 
 # ── Prediction ─────────────────────────────────────────────────────────────────
 if submitted:
@@ -500,7 +664,7 @@ if submitted:
 
     dropout_idx = list(le.classes_).index("Dropout")
     if hasattr(model, "predict_proba"):
-        proba = model.predict_proba(X_scaled)[0]
+        proba       = model.predict_proba(X_scaled)[0]
         dropout_pct = float(proba[dropout_idx] * 100)
         pred_class  = le.classes_[np.argmax(proba)]
     else:
@@ -515,34 +679,45 @@ if submitted:
         tier, label, tier_icon = "LOW", "Low Risk", "low"
 
     st.markdown("---")
-    st.markdown('<p class="section-label">Results</p><p class="section-title">Student risk assessment</p>', unsafe_allow_html=True)
+    st.markdown('<p class="step-label">Results</p><p class="step-title">Student risk assessment</p>', unsafe_allow_html=True)
 
     st.markdown(f"""
-    <div class="result-hero {tier_icon}">
-        <p class="risk-pct">{dropout_pct:.1f}%</p>
-        <p class="risk-label">{label} · Dropout probability</p>
-        <p class="risk-msg">{risk_message(tier, pred_class, dropout_pct)}</p>
+    <div class="result-wrap {tier_icon}">
+        <p class="result-pct">{dropout_pct:.1f}%</p>
+        <p class="result-tier">Dropout probability &nbsp;·&nbsp; {label}</p>
+        <p class="result-msg">{risk_message(tier, pred_class, dropout_pct)}</p>
     </div>
     """, unsafe_allow_html=True)
 
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
-        st.markdown(f'<div class="stat-box"><p class="stat-val">{pred_class}</p><p class="stat-lbl">Predicted outcome</p></div>', unsafe_allow_html=True)
-    with m2:
-        st.markdown(f'<div class="stat-box"><p class="stat-val">{label}</p><p class="stat-lbl">Risk tier</p></div>', unsafe_allow_html=True)
-    with m3:
-        st.markdown(f'<div class="stat-box"><p class="stat-val">{raw["Overall Approval Rate"]*100:.0f}%</p><p class="stat-lbl">Pass rate</p></div>', unsafe_allow_html=True)
-    with m4:
-        st.markdown(f'<div class="stat-box"><p class="stat-val">{raw["Average Grade Both Sems"]:.1f}</p><p class="stat-lbl">Avg grade</p></div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="stat-row">
+        <div class="stat-cell">
+            <p class="stat-val">{pred_class}</p>
+            <p class="stat-key">Predicted outcome</p>
+        </div>
+        <div class="stat-cell">
+            <p class="stat-val">{label}</p>
+            <p class="stat-key">Risk tier</p>
+        </div>
+        <div class="stat-cell">
+            <p class="stat-val">{raw["Overall Approval Rate"]*100:.0f}%</p>
+            <p class="stat-key">Pass rate</p>
+        </div>
+        <div class="stat-cell">
+            <p class="stat-val">{raw["Average Grade Both Sems"]:.1f}</p>
+            <p class="stat-key">Avg grade</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.progress(float(min(dropout_pct / 100, 1.0)))
-    st.caption("Dropout probability scale — higher bar means greater urgency for intervention.")
+    st.caption("Dropout probability scale — higher bar means greater urgency.")
 
-    st.markdown('<p class="section-label">Action plan</p><p class="section-title">Recommended interventions for academic advisor</p>', unsafe_allow_html=True)
+    st.markdown('<p class="step-label" style="margin-top:1.5rem;">Action plan</p><p class="step-title">Recommended interventions</p>', unsafe_allow_html=True)
     st.markdown(
-        '<p style="color:#94a3b8; font-size:0.9rem; margin-bottom:1rem;">'
-        'Prioritized by severity. Address <strong style="color:#ef4444;">Financial</strong> and '
-        '<strong style="color:#f43f5e;">Wellbeing</strong> flags first.</p>',
+        '<p style="color:#4a5568; font-size:0.82rem; font-family: IBM Plex Mono, monospace; '
+        'letter-spacing: 0.05em; margin-bottom: 0.75rem;">'
+        'Prioritized by severity. Address FINANCIAL and WELLBEING flags first.</p>',
         unsafe_allow_html=True,
     )
 
@@ -560,4 +735,4 @@ if submitted:
 
 else:
     st.markdown("---")
-    st.info("👆 Fill in the student profile above and click **Analyze Dropout Risk** to generate a personalized assessment.")
+    st.info("Fill in the student profile above and click Analyze Dropout Risk to generate a personalized assessment.")
